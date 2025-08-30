@@ -7,20 +7,16 @@ class AppModelSelect extends LitElement {
   };
   static styles = css`
     .app-model-select {
-      margin-top: 5rem;
+      margin-top: 2rem;
       width: 80rem;
-      display: grid;
-      gap: 1.25rem;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      grid-template-columns: 35% 20% 10%;
-      column-gap: 1rem;
+      display: flex;
+      justify-content: center;
       padding-inline-start: 0px;
     }
 
     .select-container {
       display: flex;
       flex-direction: column;
-      grid-column: 2;
     }
 
     select {

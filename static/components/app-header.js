@@ -1,5 +1,4 @@
 import { css, html, LitElement } from "//cdn.skypack.dev/lit@v2.8.0";
-import "./app-button-link.js";
 class AppHeader extends LitElement {
   static styles = css`
     h1 {
@@ -31,7 +30,7 @@ class AppHeader extends LitElement {
       display: flex;
       flex-direction: row;
       flex-wrap: nowrap;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
       align-content: stretch;
       padding-left: 2rem;
@@ -54,6 +53,7 @@ class AppHeader extends LitElement {
       align-items: center;
       display: flex;
       height: 4rem;
+      font-size: 1.5rem;
     }
   `;
 
@@ -61,16 +61,8 @@ class AppHeader extends LitElement {
     return html`<nav>
       <div class="nav-margin">
         <div class="nav-brand">
-          <img src="assets/dg.svg" class="nav-logo" />
-          <div>Starter Apps</div>
+          <div>Paragon Deepgram Transcriber</div>
         </div>
-
-        <app-button-link
-          url="https://github.com/deepgram-starters"
-          class="secondary"
-        >
-          <span style="margin-right:10px;">Get the code on Github</span>
-        </app-button-link>
       </div>
     </nav>`;
   }
