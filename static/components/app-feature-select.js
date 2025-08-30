@@ -44,9 +44,9 @@ class AppFeatureSelect extends LitElement {
 
   constructor() {
     super();
-  this.displayedFeatures = [];
-  // Default Smart Format to enabled
-  this.selectedFeatures = { smart_format: true };
+    this.displayedFeatures = [];
+    // Default Smart Format and Dictation to enabled
+    this.selectedFeatures = { smart_format: true, dictation: true };
     this.currentCategory = "";
     this.features = [
       {
@@ -88,12 +88,28 @@ class AppFeatureSelect extends LitElement {
         key: "diarize",
         dataType: "boolean",
       },
+      {
+        category: "FORMATTING",
+        name: "Dictation",
+        description:
+          "Indicates whether to add dictation commands to the transcript.",
+        key: "dictation",
+        dataType: "boolean",
+      },
     ];
   }
 
   firstUpdated() {
     // Initialize displayed features
     this.filterFeatures("FORMATTING");
+
+    // Dispatch initial features
+    const options = {
+      detail: this.selectedFeatures,
+      bubbles: true,
+      composed: true,
+    };
+    this.dispatchEvent(new CustomEvent("featureselect", options));
   }
 
   filterFeatures(item) {
@@ -133,7 +149,7 @@ class AppFeatureSelect extends LitElement {
                   type="checkbox"
                   id="${feature.key}"
                   name="${feature.key}"
-                  ?checked=${feature.key === "smart_format" || this.selectedFeatures[feature.key]}
+                  ?checked=${this.selectedFeatures[feature.key]}
                   @change=${this.selectFeature}
                 />
                 <label for="${feature.key}">${feature.name}</label>

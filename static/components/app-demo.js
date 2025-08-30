@@ -148,7 +148,11 @@ class AppDemo extends LitElement {
         ${this.results.map(
           (item) => html`
             <h4>${item.file}</h4>
-            <app-transcript .result=${item.result}></app-transcript>
+            <app-transcript
+              .result=${item.result}
+              .fileName=${item.file}
+              .modelName=${this.selectedModel.name}
+            ></app-transcript>
           `
         )}
       </div>
