@@ -17,6 +17,7 @@ class AppFeatureSelect extends LitElement {
       display: flex;
       justify-content: center;
       border-radius: 0.0625rem;
+      margin-top: 2rem;
     }
 
     .tabcontent {
