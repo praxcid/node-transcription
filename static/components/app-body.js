@@ -3,6 +3,7 @@ import "./app-demo.js";
 import "./app-audio-select.js";
 import "./app-model-select.js";
 import "./app-feature-select.js";
+import "./app-submit-button.js";
 
 class AppBody extends LitElement {
   static styles = css`
@@ -16,6 +17,7 @@ class AppBody extends LitElement {
       <app-demo>
         <app-audio-select></app-audio-select>
         <app-model-select></app-model-select>
+        <app-submit-button></app-submit-button>
         <app-feature-select></app-feature-select>
       </app-demo>
     </article>`;

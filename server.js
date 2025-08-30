@@ -5,7 +5,6 @@ const multer = require("multer");
 const path = require("path");
 
 const port = process.env.API_PORT || 8080;
-// Initialize Deepgram SDK (use default API URL)
 const deepgram = new Deepgram(config.dgKey);
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -40,16 +39,12 @@ app.post("/api", upload.single("file"), async (req, res) => {
     }
 
     // send request to deepgram
-    const transcription = await deepgram.transcription.preRecorded(
-      dgRequest,
-      {
-        ...dgFeatures,
-        model,
-        ...(version ? { version } : null),
-        // Only include tier when model is not whisper
-        ...(model === "whisper" ? null : tier ? { tier } : null),
-      }
-    );
+    const transcription = await deepgram.transcription.preRecorded(dgRequest, {
+      ...dgFeatures,
+      model,
+      tier,
+      ...(version ? { version } : null),
+    });
 
     // return results
     res.send({ model, version, tier, dgRequest, dgFeatures, transcription });

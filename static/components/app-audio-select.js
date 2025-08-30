@@ -7,7 +7,7 @@ class AppAudioSelect extends LitElement {
     working: {},
     file: {},
     selectedExample: {},
-    selectedFile: {},
+    selectedFiles: { state: true },
   };
 
   static styles = css`
@@ -56,6 +56,17 @@ class AppAudioSelect extends LitElement {
 
     .selected-file {
       color: rgb(239, 0, 116);
+      margin-top: 1rem;
+    }
+
+    .selected-file ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 0.5rem;
+    }
+
+    .selected-file li {
+      margin-bottom: 0.25rem;
     }
 
     .audio-own-label {
@@ -138,7 +149,7 @@ class AppAudioSelect extends LitElement {
     super();
     this.working = false;
     this.selectedExample = "";
-    this.selectedFile = {};
+    this.selectedFiles = [];
     this.file = {};
     this.files = [
       {
@@ -237,10 +248,10 @@ class AppAudioSelect extends LitElement {
   }
 
   _dispatchSelectUploadFile() {
-    this.selectedFile = this._fileInput.files[0];
-    if (this.selectedFile) {
+    this.selectedFiles = this._fileInput.files;
+    if (this.selectedFiles.length > 0) {
       const options = {
-        detail: this.selectedFile,
+        detail: this.selectedFiles,
         bubbles: true,
         composed: true,
       };
@@ -267,7 +278,6 @@ class AppAudioSelect extends LitElement {
           name="audio"
           ?disabled="${this.working}"
         />
-        <label class="audio-own-label" for="file"> </label>
 
         <input
           class="sr-only"
@@ -275,6 +285,7 @@ class AppAudioSelect extends LitElement {
           type="file"
           name="file"
           accept="audio/*,video/*"
+          multiple
           ?disabled="${this.working}"
           @change=${this._dispatchSelectUploadFile}
         />
@@ -283,10 +294,19 @@ class AppAudioSelect extends LitElement {
           class="button-choose-file"
           type="button"
           @click=${this.chooseFile}
-          value="Upload Audio File"
+          value="Upload Audio Files"
         />
         <div class="selected-file">
-          ${this.selectedFile ? this.selectedFile.name : null}
+          ${this.selectedFiles.length > 0
+            ? html`
+                <p>Selected files:</p>
+                <ul>
+                  ${Array.from(this.selectedFiles).map(
+                    (file) => html`<li>${file.name}</li>`
+                  )}
+                </ul>
+              `
+            : null}
         </div>
       </li>
     </ul>`;

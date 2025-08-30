@@ -7,7 +7,7 @@ class AppModelSelect extends LitElement {
   };
   static styles = css`
     .app-model-select {
-      margin-top: 2rem;
+      margin-top: 0.4rem;
       width: 80rem;
       display: flex;
       justify-content: center;
@@ -26,7 +26,7 @@ class AppModelSelect extends LitElement {
       box-shadow: 0 20px 25px -5px black, 0 8px 10px -6px black;
       color: white;
       height: 51px;
-      margin-bottom: 5rem;
+      margin-bottom: 1rem;
       border-radius: 0.0625rem;
       background: #2e3c4d;
       border: solid #3d4f66 1px;
@@ -40,7 +40,10 @@ class AppModelSelect extends LitElement {
     }
 
     label {
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.25rem;
+      text-align: center;
+      display: block;
+      transform: translateY(-4px);
     }
   `;
 
@@ -49,8 +52,13 @@ class AppModelSelect extends LitElement {
     this.selectedModel = "";
     this.models = [
       {
+        model: "medical",
+        name: "Deepgram Nova 3 Medical",
+        tier: "nova-3",
+      },
+      {
         model: "general",
-        name: "Deepgram Nova 3",
+        name: "Deepgram Nova 3 General",
         tier: "nova-3",
       },
     ];

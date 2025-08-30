@@ -8,9 +8,10 @@ class AppDemo extends LitElement {
     done: {},
     working: {},
     selectedModel: {},
-    file: {},
+    files: { state: true },
     fileUrl: {},
     selectedFeatures: {},
+    results: { state: true },
   };
 
   static styles = css`
@@ -21,33 +22,6 @@ class AppDemo extends LitElement {
       margin-right: auto;
       max-width: 80rem;
       padding: 2rem;
-    }
-
-    .demo-instructions {
-      font-size: 1.5rem;
-      line-height: 2rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-
-    .submit-button {
-      margin-top: 3rem;
-      padding-top: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .submit-button button {
-      border: none;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 0.0625rem;
-      background: linear-gradient(95deg, #1796c1 20%, #15bdae 40%, #13ef95 95%);
-      height: 45px;
-      width: 250px;
-      cursor: pointer;
     }
 
     .transcript {
@@ -61,58 +35,68 @@ class AppDemo extends LitElement {
   constructor() {
     super();
     this.selectedModel = "";
-    this.file = {};
+    this.files = [];
     this.fileUrl = "";
     this.selectedFeatures = {};
     this.error = "";
     this.done = true;
     this.working = false;
-    this.result = {};
+    this.results = [];
   }
 
   async submitRequest() {
+    if (this.files.length === 0 && !this.fileUrl) {
+      this.error = "Please select a file or provide a URL.";
+      return;
+    }
+
     this.done = false;
     this.working = true;
+    this.results = [];
+    this.error = "";
     this.requestUpdate();
+
     const apiOrigin = "http://localhost:8080";
-    const formData = new FormData();
-    if (this.file.size > 0) {
-      formData.append("file", this.file);
+
+    const processFile = async (file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("model", this.selectedModel.model);
+      formData.append("tier", this.selectedModel.tier);
+      formData.append("features", JSON.stringify(this.selectedFeatures));
+
+      try {
+        const response = await fetch(`${apiOrigin}/api`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const { err, transcription } = await response.json();
+        if (err) throw new Error(err);
+
+        this.results = [...this.results, { file: file.name, result: transcription.results }];
+        this.requestUpdate();
+      } catch (error) {
+        console.log(error);
+        this.error = `Error processing ${file.name}: ${error.message}`;
+        this.requestUpdate();
+      }
+    };
+
+    for (const file of this.files) {
+      await processFile(file);
     }
 
-    if (this.fileUrl) {
-      formData.append("url", this.fileUrl);
-    }
+    this.working = false;
+    this.done = true;
+    this.requestUpdate();
 
-    formData.append("model", this.selectedModel.model);
-    formData.append("tier", this.selectedModel.tier);
-    formData.append("features", JSON.stringify(this.selectedFeatures));
-    console.log("submit request");
-
-    try {
-      const response = await fetch(`${apiOrigin}/api`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const { err, transcription } = await response.json();
-      if (err) throw Error(err);
-      const { results } = transcription;
-      this.result = results;
-      this.requestUpdate();
-      this.done = true;
-      this.working = false;
-      setTimeout(() => {
-        if (this._button && this._button[0]) {
-          const top = this._button[0].getBoundingClientRect().top + window.scrollY;
-          window.scrollTo({ top, behavior: "smooth" });
-        }
-      }, 500);
-    } catch (error) {
-      console.log(error);
-      // this.error = error;
-      this.working = false;
-    }
+    setTimeout(() => {
+      if (this._button && this._button[0]) {
+        const top = this._button[0].getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top, behavior: "smooth" });
+      }
+    }, 500);
   }
 
   isLoading() {
@@ -133,13 +117,13 @@ class AppDemo extends LitElement {
   }
 
   _fileSelectListener(e) {
-    this.file = e.detail;
+    this.files = Array.from(e.detail);
     this.fileUrl = "";
     this.requestUpdate();
   }
   _fileURLSelectListener(e) {
     this.fileUrl = e.detail;
-    this.file = {};
+    this.files = [];
     this.requestUpdate();
   }
   _featureSelectListener(e) {
@@ -154,17 +138,19 @@ class AppDemo extends LitElement {
         @modelselect=${this._modelSelectListener}
         @fileURLselect=${this._fileURLSelectListener}
         @featureselect=${this._featureSelectListener}
+        @submit=${this.submitRequest}
         class="app-demo"
       >
         <slot></slot>
       </div>
-      <div class="submit-button">
-        <button @click=${this.submitRequest}>Transcribe</button>
-        <p>${this.error}</p>
-      </div>
       <div class="transcript">
         ${this.isLoading()}
-        <app-transcript .result=${this.result}> </app-transcript>
+        ${this.results.map(
+          (item) => html`
+            <h4>${item.file}</h4>
+            <app-transcript .result=${item.result}></app-transcript>
+          `
+        )}
       </div>
     `;
   }
