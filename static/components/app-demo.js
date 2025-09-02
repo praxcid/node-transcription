@@ -62,7 +62,6 @@ class AppDemo extends LitElement {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("model", this.selectedModel.model);
-      formData.append("tier", this.selectedModel.tier);
       formData.append("features", JSON.stringify(this.selectedFeatures));
 
       try {

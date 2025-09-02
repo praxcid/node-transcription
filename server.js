@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname, "static")));
 
 app.post("/api", upload.single("file"), async (req, res) => {
   const { body, file } = req;
-  const { url, features, model, version, tier } = body;
+  const { url, features, model, version } = body;
   const dgFeatures = JSON.parse(features);
 
   let dgRequest = null;
@@ -42,19 +42,17 @@ app.post("/api", upload.single("file"), async (req, res) => {
     const transcription = await deepgram.transcription.preRecorded(dgRequest, {
       ...dgFeatures,
       model,
-      tier,
       ...(version ? { version } : null),
     });
 
     // return results
-    res.send({ model, version, tier, dgRequest, dgFeatures, transcription });
+    res.send({ model, version, dgRequest, dgFeatures, transcription });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.log(err, dgRequest, {
       ...dgFeatures,
       version,
       model,
-      tier,
     });
 
     // handle error

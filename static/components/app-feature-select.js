@@ -123,11 +123,22 @@ class AppFeatureSelect extends LitElement {
   }
 
   selectFeature(e) {
-    if (this.selectedFeatures.hasOwnProperty(e.target.name)) {
-      const featureToDelete = e.target.name;
-      delete this.selectedFeatures[featureToDelete];
+    const featureName = e.target.name;
+    const isChecked = e.target.checked;
+
+    if (isChecked) {
+      this.selectedFeatures[featureName] = e.target.value === "on" ? true : e.target.value;
     } else {
-      this.selectedFeatures[e.target.name] = true;
+      delete this.selectedFeatures[featureName];
+    }
+
+    if (featureName === "smart_format") {
+      if (isChecked) {
+        // when smart_format is on, let it control these features
+        delete this.selectedFeatures.punctuate;
+        delete this.selectedFeatures.paragraphs;
+        delete this.selectedFeatures.numerals;
+      }
     }
 
     const options = {
@@ -137,6 +148,7 @@ class AppFeatureSelect extends LitElement {
     };
 
     this.dispatchEvent(new CustomEvent("featureselect", options));
+    this.requestUpdate();
   }
 
   render() {
@@ -152,6 +164,8 @@ class AppFeatureSelect extends LitElement {
                   name="${feature.key}"
                   ?checked=${this.selectedFeatures[feature.key]}
                   @change=${this.selectFeature}
+                  ?disabled=${this.selectedFeatures.smart_format &&
+                  ["punctuate", "paragraphs", "numerals"].includes(feature.key)}
                 />
                 <label for="${feature.key}">${feature.name}</label>
                 <p>${feature.description}</p>
