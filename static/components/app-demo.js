@@ -56,7 +56,7 @@ class AppDemo extends LitElement {
     this.error = "";
     this.requestUpdate();
 
-    const apiOrigin = "http://localhost:8080";
+    const apiOrigin = window.location.origin;
 
     const processFile = async (file) => {
       const formData = new FormData();
