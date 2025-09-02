@@ -73,15 +73,16 @@ class AppModelSelect extends LitElement {
   }
 
   _dispatchSelectModel() {
-    this.selectedModel = this._select.value;
+    const selectedValue = this._select?.value;
+    const modelObj = this.models.find((m) => m.model === selectedValue) ?? null;
 
-    const model = this.models.filter((model) => {
-      return model.name === this.selectedModel;
-    });
+    // Keep selectedModel as the model object for easier use by consumers
+    this.selectedModel = modelObj;
 
-    if (this.selectedModel) {
+    if (modelObj) {
+      console.log('app-model-select: dispatching', modelObj);
       const options = {
-        detail: model,
+        detail: modelObj,
         bubbles: true,
         composed: true,
       };
@@ -96,7 +97,7 @@ class AppModelSelect extends LitElement {
         <div class="styled-select">
           <select @change=${this._dispatchSelectModel}>
             ${this.models.map(
-              (model) => html`<option value="${model.name}">${model.name}</option>`
+              (model) => html`<option value="${model.model}">${model.name}</option>`
             )}
           </select>
         </div>

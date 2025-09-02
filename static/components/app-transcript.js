@@ -180,26 +180,60 @@ class AppTranscript extends LitElement {
       this.result.channels &&
       this.result.channels[0] &&
       this.result.channels[0].alternatives &&
-      this.result.channels[0].alternatives[0] &&
-      this.result.channels[0].alternatives[0].transcript
+      this.result.channels[0].alternatives[0]
     ) {
-      let transcriptText =
-        this.result.channels[0].alternatives[0].transcript.replace(
-          /\. /g,
-          ".  "
-        );
+      const alt = this.result.channels[0].alternatives[0];
+
+      // Prefer formatted paragraphs from Deepgram if available
+      let transcriptText = "";
+      const paras = alt?.paragraphs;
+      if (paras) {
+        if (Array.isArray(paras.paragraphs) && paras.paragraphs.length) {
+          transcriptText = paras.paragraphs
+            .map((p) => {
+              // Prefer sentences text if available, else paragraph text
+              if (Array.isArray(p.sentences) && p.sentences.length) {
+                return p.sentences.map((s) => s.text).filter(Boolean).join(" ");
+              }
+              return (p.text || p.transcript || "").trim();
+            })
+            .filter(Boolean)
+            .join("\n\n");
+        } else if (typeof paras.transcript === "string") {
+          transcriptText = paras.transcript;
+        }
+      }
+
+      // Fallback to the plain transcript if no paragraph info present
+      if (!transcriptText && typeof alt.transcript === "string") {
+        transcriptText = alt.transcript;
+      }
+
+      // Light readability tweaks
+      if (transcriptText) {
+        // If dictation wasn’t applied but user said “new line”, render a real break
+        // Also strip an optional trailing punctuation (e.g., the spoken "New line.") and spaces
+        transcriptText = transcriptText.replace(/\bnew\s*line\b[.!?]?\s*/gi, "\n\n");
+        // Add two spaces after periods for Word export readability
+        transcriptText = transcriptText.replace(/\.\s/g, ".  ");
+        // Cleanup: remove stray leading period+spaces artifacts at start of lines
+        transcriptText = transcriptText.replace(/^\.+\s{0,2}/gm, "");
+      }
+
       if (this.modelName === "Deepgram Nova 3 Medical") {
         transcriptText = this.expandContractions(transcriptText);
       }
-      this.transcript = transcriptText;
-      this.requestUpdate();
+
+      if (transcriptText) {
+        this.transcript = transcriptText;
+        this.requestUpdate();
+      }
     }
     if (
       this.result &&
       this.result.channels &&
       this.result.channels[0] &&
       this.result.channels[0].alternatives &&
-      this.result.channels[0].alternatives[0] &&
       this.result.channels[0].alternatives[0].summaries
     ) {
       let summaryText =
@@ -287,7 +321,7 @@ class AppTranscript extends LitElement {
     if (this.transcript.length > 0) {
       return html`
         <button @click=${this.downloadTranscript}>Download Transcript</button>
-        <section>Transcript: ${this.transcript}</section>
+        <section style="white-space: pre-wrap;">Transcript: ${this.transcript}</section>
         ${
           this.summary
             ? html` <section>Summary: ${this.summary}</section>`

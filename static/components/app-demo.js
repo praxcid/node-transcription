@@ -112,7 +112,8 @@ class AppDemo extends LitElement {
   }
 
   _modelSelectListener(e) {
-    this.selectedModel = e.detail[0];
+    this.selectedModel = e.detail;
+    console.log('app-demo: received modelselect ->', this.selectedModel);
   }
 
   _fileSelectListener(e) {
@@ -140,7 +141,7 @@ class AppDemo extends LitElement {
         @submit=${this.submitRequest}
         class="app-demo"
       >
-        <slot></slot>
+        <slot .selectedFeatures=${this.selectedFeatures}></slot>
       </div>
       <div class="transcript">
         ${this.isLoading()}

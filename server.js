@@ -18,6 +18,22 @@ app.post("/api", upload.single("file"), async (req, res) => {
   const { url, features, model, version } = body;
   const dgFeatures = JSON.parse(features);
 
+  // Normalize feature flags to avoid conflicting or missing dependent options.
+  // Make a shallow copy so we can adjust without mutating the parsed object used elsewhere.
+  const dgOptions = { ...dgFeatures };
+
+  // If paragraphs is requested, ensure punctuate is also set (Deepgram expects punctuation for paragraphs).
+  if (dgOptions.paragraphs && !Object.prototype.hasOwnProperty.call(dgOptions, 'punctuate')) {
+    dgOptions.punctuate = true;
+  }
+
+  // If smart_format is explicitly enabled, remove specific formatting flags to let the service handle them.
+  if (dgOptions.smart_format) {
+    delete dgOptions.punctuate;
+    delete dgOptions.paragraphs;
+    delete dgOptions.numerals;
+  }
+
   let dgRequest = null;
 
   try {
@@ -39,11 +55,18 @@ app.post("/api", upload.single("file"), async (req, res) => {
     }
 
     // send request to deepgram
-    const transcription = await deepgram.transcription.preRecorded(dgRequest, {
-      ...dgFeatures,
+    // Log the features and model being sent for debugging
+    // Build request options. Some Deepgram API versions expect formatting flags nested
+    // under a `formatting` object. Include both to maximize compatibility.
+    const requestOptions = {
+      ...dgOptions,
+      ...(Object.keys(dgOptions).length ? { formatting: dgOptions } : {}),
       model,
       ...(version ? { version } : null),
-    });
+    };
+
+    console.log('Deepgram request options:', requestOptions);
+    const transcription = await deepgram.transcription.preRecorded(dgRequest, requestOptions);
 
     // return results
     res.send({ model, version, dgRequest, dgFeatures, transcription });

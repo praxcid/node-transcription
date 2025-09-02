@@ -4,7 +4,6 @@ class AppFeatureSelect extends LitElement {
   static properties = {
     features: {},
     displayedFeatures: {},
-    selectedFeatures: {},
     currentCategory: {},
   };
 
@@ -46,8 +45,12 @@ class AppFeatureSelect extends LitElement {
   constructor() {
     super();
     this.displayedFeatures = [];
-    // Default Smart Format and Dictation to enabled
-    this.selectedFeatures = { smart_format: true, dictation: true };
+    this.selectedFeatures = {
+      smart_format: true,
+      punctuate: true,
+      paragraphs: true,
+      numerals: true,
+    };
     this.currentCategory = "";
     this.features = [
       {
@@ -125,25 +128,28 @@ class AppFeatureSelect extends LitElement {
   selectFeature(e) {
     const featureName = e.target.name;
     const isChecked = e.target.checked;
+    const newSelectedFeatures = { ...this.selectedFeatures };
 
     // Update the selected features object
     if (isChecked) {
-      this.selectedFeatures[featureName] = e.target.type === "checkbox" ? true : e.target.value;
+      newSelectedFeatures[featureName] = e.target.type === "checkbox" ? true : e.target.value;
     } else {
-      delete this.selectedFeatures[featureName];
+      delete newSelectedFeatures[featureName];
     }
 
     // Handle smart_format logic
-    if (this.selectedFeatures.smart_format) {
+    if (newSelectedFeatures.smart_format) {
       // When smart_format is on, it controls these features.
       // We can remove them from the object to avoid conflicts.
-      delete this.selectedFeatures.punctuate;
-      delete this.selectedFeatures.paragraphs;
-      delete this.selectedFeatures.numerals;
+      delete newSelectedFeatures.punctuate;
+      delete newSelectedFeatures.paragraphs;
+      delete newSelectedFeatures.numerals;
     }
 
+    this.selectedFeatures = newSelectedFeatures;
+
     const options = {
-      detail: { ...this.selectedFeatures },
+      detail: this.selectedFeatures,
       bubbles: true,
       composed: true,
     };
