@@ -126,23 +126,24 @@ class AppFeatureSelect extends LitElement {
     const featureName = e.target.name;
     const isChecked = e.target.checked;
 
+    // Update the selected features object
     if (isChecked) {
-      this.selectedFeatures[featureName] = e.target.value === "on" ? true : e.target.value;
+      this.selectedFeatures[featureName] = e.target.type === "checkbox" ? true : e.target.value;
     } else {
       delete this.selectedFeatures[featureName];
     }
 
-    if (featureName === "smart_format") {
-      if (isChecked) {
-        // when smart_format is on, let it control these features
-        delete this.selectedFeatures.punctuate;
-        delete this.selectedFeatures.paragraphs;
-        delete this.selectedFeatures.numerals;
-      }
+    // Handle smart_format logic
+    if (this.selectedFeatures.smart_format) {
+      // When smart_format is on, it controls these features.
+      // We can remove them from the object to avoid conflicts.
+      delete this.selectedFeatures.punctuate;
+      delete this.selectedFeatures.paragraphs;
+      delete this.selectedFeatures.numerals;
     }
 
     const options = {
-      detail: this.selectedFeatures,
+      detail: { ...this.selectedFeatures },
       bubbles: true,
       composed: true,
     };
@@ -162,7 +163,7 @@ class AppFeatureSelect extends LitElement {
                   type="checkbox"
                   id="${feature.key}"
                   name="${feature.key}"
-                  ?checked=${this.selectedFeatures[feature.key]}
+                  ?checked=${this.selectedFeatures[feature.key] || (this.selectedFeatures.smart_format && ["punctuate", "paragraphs", "numerals"].includes(feature.key))}
                   @change=${this.selectFeature}
                   ?disabled=${this.selectedFeatures.smart_format &&
                   ["punctuate", "paragraphs", "numerals"].includes(feature.key)}
