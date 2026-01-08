@@ -1,4 +1,4 @@
-import { html, css, LitElement } from "//cdn.skypack.dev/lit@v2.8.0";
+import { html, css, LitElement } from "https://unpkg.com/lit@2.8.0?module";
 
 class AppSubmitButton extends LitElement {
   static styles = css`

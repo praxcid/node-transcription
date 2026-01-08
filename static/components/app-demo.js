@@ -1,4 +1,4 @@
-import { html, css, LitElement } from "//cdn.skypack.dev/lit@v2.8.0";
+import { html, css, LitElement } from "https://unpkg.com/lit@2.8.0?module";
 import "./app-transcript.js";
 import "./app-spinner.js";
 
@@ -44,7 +44,7 @@ class AppDemo extends LitElement {
     this.results = [];
   }
 
-  async submitRequest() {
+  submitRequest = async () => {
     if (this.files.length === 0 && !this.fileUrl) {
       this.error = "Please select a file or provide a URL.";
       return;
@@ -111,22 +111,22 @@ class AppDemo extends LitElement {
       this.renderRoot?.querySelectorAll("button") ?? null);
   }
 
-  _modelSelectListener(e) {
+  _modelSelectListener = (e) => {
     this.selectedModel = e.detail;
     console.log('app-demo: received modelselect ->', this.selectedModel);
   }
 
-  _fileSelectListener(e) {
+  _fileSelectListener = (e) => {
     this.files = Array.from(e.detail);
     this.fileUrl = "";
     this.requestUpdate();
   }
-  _fileURLSelectListener(e) {
+  _fileURLSelectListener = (e) => {
     this.fileUrl = e.detail;
     this.files = [];
     this.requestUpdate();
   }
-  _featureSelectListener(e) {
+  _featureSelectListener = (e) => {
     this.selectedFeatures = e.detail;
     this.requestUpdate();
   }

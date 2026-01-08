@@ -1,4 +1,4 @@
-import { html, css, LitElement } from "//cdn.skypack.dev/lit@v2.8.0";
+import { html, css, LitElement } from "https://unpkg.com/lit@2.8.0?module";
 
 class AppModelSelect extends LitElement {
   static properties = {
@@ -72,7 +72,7 @@ class AppModelSelect extends LitElement {
     this._dispatchSelectModel();
   }
 
-  _dispatchSelectModel() {
+  _dispatchSelectModel = () => {
     const selectedValue = this._select?.value;
     const modelObj = this.models.find((m) => m.model === selectedValue) ?? null;
 

@@ -1,4 +1,4 @@
-import { css, html, LitElement } from "//cdn.skypack.dev/lit@v2.8.0";
+import { css, html, LitElement } from "https://unpkg.com/lit@2.8.0?module";
 class AppHeader extends LitElement {
   static styles = css`
     h1 {

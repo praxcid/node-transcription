@@ -1,9 +1,10 @@
-import { html, css, LitElement } from "//cdn.skypack.dev/lit@v2.8.0";
+import { html, css, LitElement } from "https://unpkg.com/lit@2.8.0?module";
 
 class AppFeatureSelect extends LitElement {
   static properties = {
     features: {},
     displayedFeatures: {},
+    selectedFeatures: {},
     currentCategory: {},
   };
 
@@ -125,7 +126,7 @@ class AppFeatureSelect extends LitElement {
     });
   }
 
-  selectFeature(e) {
+  selectFeature = (e) => {
     const featureName = e.target.name;
     const isChecked = e.target.checked;
     const newSelectedFeatures = { ...this.selectedFeatures };
