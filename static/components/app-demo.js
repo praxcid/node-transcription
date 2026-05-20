@@ -404,6 +404,8 @@ class AppDemo extends LitElement {
     this.files = Array.from(e.detail);
     this.fileUrl = "";
     this._autoSelectDoctor();
+    const submitButton = this.querySelector("app-submit-button");
+    if (submitButton) submitButton.showReset = this.files.length > 0;
     this.requestUpdate();
   }
 

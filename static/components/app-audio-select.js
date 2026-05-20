@@ -66,7 +66,35 @@ class AppAudioSelect extends LitElement {
     }
 
     .selected-file li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       margin-bottom: 0.25rem;
+    }
+
+    .selected-file li span {
+      flex: 1;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .remove-file-btn {
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      color: #8899aa;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0 0.15rem;
+      border-radius: 50%;
+      transition: color 0.15s;
+    }
+
+    .remove-file-btn:hover {
+      color: #f87171;
     }
 
     .audio-own-label {
@@ -260,6 +288,15 @@ class AppAudioSelect extends LitElement {
     };
     this.dispatchEvent(new CustomEvent("fileselect", options));
   }
+  _removeFile(index) {
+    this.selectedFiles = this.selectedFiles.filter((_, i) => i !== index);
+    this.dispatchEvent(new CustomEvent("fileselect", {
+      detail: this.selectedFiles,
+      bubbles: true,
+      composed: true,
+    }));
+  }
+
   _dispatchSelectCdnAudio() {
     if (this.selectedExample) {
       const options = {
@@ -304,7 +341,11 @@ class AppAudioSelect extends LitElement {
                 <p>Selected files:</p>
                 <ul>
                   ${Array.from(this.selectedFiles).map(
-                    (file) => html`<li>${file.name}</li>`
+                    (file, i) => html`
+                      <li>
+                        <span>${file.name}</span>
+                        <button class="remove-file-btn" title="Remove" @click=${() => this._removeFile(i)}>×</button>
+                      </li>`
                   )}
                 </ul>
               `

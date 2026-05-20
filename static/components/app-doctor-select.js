@@ -1,6 +1,5 @@
 import { html, css, LitElement } from "https://unpkg.com/lit@2.8.0?module";
 
-const STORAGE_KEY = "transcription_doctors";
 
 class AppDoctorSelect extends LitElement {
   static properties = {
@@ -295,7 +294,7 @@ class AppDoctorSelect extends LitElement {
     super();
     this.medicalMode = false;
     this.autoSelectId = "";
-    this.doctors = this._load();
+    this.doctors = [];
     this.selectedDoctorName = "";
     this.showAddDoctor = false;
     this.newDoctorName = "";
@@ -303,6 +302,7 @@ class AppDoctorSelect extends LitElement {
     this.showAddKeyterm = false;
     this.newKeyterm = "";
     this.autoMatchStatus = null;
+    this._fetchDoctors();
   }
 
   updated(changedProps) {
@@ -331,16 +331,21 @@ class AppDoctorSelect extends LitElement {
     }
   }
 
-  _load() {
+  async _fetchDoctors() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const res = await fetch("/api/doctors");
+      this.doctors = await res.json();
     } catch {
-      return [];
+      this.doctors = [];
     }
   }
 
-  _save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.doctors));
+  async _save() {
+    await fetch("/api/doctors", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(this.doctors),
+    });
   }
 
   get selectedDoctor() {

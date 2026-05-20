@@ -4,6 +4,21 @@ const express = require("express");
 const fetch = require("node-fetch");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+
+const DOCTORS_FILE = path.join(__dirname, "doctors.json");
+
+function loadDoctors() {
+  try {
+    return JSON.parse(fs.readFileSync(DOCTORS_FILE, "utf8"));
+  } catch {
+    return [];
+  }
+}
+
+function saveDoctors(doctors) {
+  fs.writeFileSync(DOCTORS_FILE, JSON.stringify(doctors, null, 2));
+}
 
 const port = process.env.API_PORT || 8080;
 const deepgram = new Deepgram(config.dgKey);
@@ -13,6 +28,18 @@ const upload = multer({ storage: storage });
 const app = express();
 
 app.use(express.static(path.join(__dirname, "static")));
+app.use(express.json());
+
+app.get("/api/doctors", (req, res) => {
+  res.json(loadDoctors());
+});
+
+app.put("/api/doctors", (req, res) => {
+  const doctors = req.body;
+  if (!Array.isArray(doctors)) return res.status(400).json({ err: "Expected an array" });
+  saveDoctors(doctors);
+  res.json({ ok: true });
+});
 
 app.get("/api/models", async (req, res) => {
   try {
