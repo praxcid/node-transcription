@@ -1,4 +1,4 @@
-import { html, css, LitElement } from "https://unpkg.com/lit@2.8.0?module";
+﻿import { html, css, LitElement } from "https://unpkg.com/lit@2.8.0?module";
 
 class AppTranscript extends LitElement {
   static properties = {
@@ -9,6 +9,8 @@ class AppTranscript extends LitElement {
     diarize: {},
     fileName: {},
     modelName: {},
+    copiedIndex: { state: true },
+    copiedAll: { state: true },
   };
   static styles = css`
     section {
@@ -29,6 +31,103 @@ class AppTranscript extends LitElement {
     .diarize-section {
       padding-bottom: 6px;
     }
+
+    .action-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .action-bar button {
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 0.0625rem;
+      height: 38px;
+      padding: 0 1.25rem;
+      cursor: pointer;
+    }
+
+    .btn-download {
+      background: linear-gradient(95deg, #1796c1 20%, #15bdae 40%, #13ef95 95%);
+    }
+
+    .btn-copy-all {
+      background: transparent;
+      border: 1px solid #3d4f66 !important;
+      color: #ededf2;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .btn-copy-all:hover {
+      background: #2e3c4d;
+      border-color: #13ef95 !important;
+      color: #13ef95;
+    }
+
+    .btn-copy-all.copied {
+      border-color: #13ef95 !important;
+      color: #13ef95;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #8899aa;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .para-block {
+      position: relative;
+      padding: 0.65rem 2.5rem 0.65rem 0.75rem;
+      border-radius: 0.25rem;
+      line-height: 1.7;
+      border-bottom: 1px solid #3d4f66;
+    }
+
+    .para-block:last-of-type {
+      border-bottom: none;
+    }
+
+    .para-block:hover {
+      background: #3a4f66;
+    }
+
+    .para-block:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .copy-btn {
+      opacity: 0;
+      position: absolute;
+      top: 0.4rem;
+      right: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: #1e2a38;
+      border: 1px solid #3d4f66;
+      border-radius: 0.25rem;
+      color: #ededf2;
+      cursor: pointer;
+      transition: opacity 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+
+    .copy-btn:hover {
+      background: #2e3c4d;
+    }
+
+    .copy-btn.copied {
+      color: #13ef95;
+      border-color: #13ef95;
+    }
   `;
   constructor() {
     super();
@@ -38,6 +137,8 @@ class AppTranscript extends LitElement {
     this.diarize = "";
     this.fileName = "";
     this.modelName = "";
+    this.copiedIndex = -1;
+    this.copiedAll = false;
   }
 
   update(changedProps) {
@@ -211,13 +312,22 @@ class AppTranscript extends LitElement {
 
       // Light readability tweaks
       if (transcriptText) {
-        // If dictation wasn’t applied but user said “new line”, render a real break
-        // Also strip an optional trailing punctuation (e.g., the spoken "New line.") and spaces
         transcriptText = transcriptText.replace(/\bnew\s*line\b[.!?]?\s*/gi, "\n\n");
-        // Add two spaces after periods for Word export readability
         transcriptText = transcriptText.replace(/\.\s/g, ".  ");
-        // Cleanup: remove stray leading period+spaces artifacts at start of lines
         transcriptText = transcriptText.replace(/^\.+\s{0,2}/gm, "");
+      }
+
+      // If still a flat block (no paragraph breaks), split into groups of 4 sentences
+      if (transcriptText && !transcriptText.includes("\n\n")) {
+        const sentences = transcriptText.match(/[^.!?]+[.!?]+\s*/g) ?? [];
+        if (sentences.length > 4) {
+          const SENTENCES_PER_PARA = 4;
+          const groups = [];
+          for (let i = 0; i < sentences.length; i += SENTENCES_PER_PARA) {
+            groups.push(sentences.slice(i, i + SENTENCES_PER_PARA).join("").trim());
+          }
+          transcriptText = groups.join("\n\n");
+        }
       }
 
       if (this.modelName === "Deepgram Nova 3 Medical") {
@@ -307,6 +417,20 @@ class AppTranscript extends LitElement {
     }
   }
 
+  copyAll() {
+    navigator.clipboard.writeText(this.transcript).then(() => {
+      this.copiedAll = true;
+      setTimeout(() => { this.copiedAll = false; }, 2000);
+    });
+  }
+
+  copyParagraph(text, index) {
+    navigator.clipboard.writeText(text).then(() => {
+      this.copiedIndex = index;
+      setTimeout(() => { this.copiedIndex = -1; }, 2000);
+    });
+  }
+
   downloadTranscript() {
     const blob = new Blob([this.transcript], {
       type: "application/msword",
@@ -320,8 +444,28 @@ class AppTranscript extends LitElement {
   displayResults() {
     if (this.transcript.length > 0) {
       return html`
-        <button @click=${this.downloadTranscript}>Download Transcript</button>
-        <section style="white-space: pre-wrap;">Transcript: ${this.transcript}</section>
+        <div class="action-bar">
+          <button class="btn-download" @click=${this.downloadTranscript}>Download Transcript</button>
+          <button class="btn-copy-all ${this.copiedAll ? "copied" : ""}" @click=${this.copyAll}>
+            ${this.copiedAll ? "✓ Copied" : "Copy All"}
+          </button>
+        </div>
+        <section>
+          <div class="section-label">Transcript</div>
+          ${this.transcript.split(/\n\n+/).filter(Boolean).map((para, i) => html`
+            <div class="para-block">
+              <button
+                class="copy-btn ${this.copiedIndex === i ? "copied" : ""}"
+                @click=${() => this.copyParagraph(para, i)}
+              >
+                ${this.copiedIndex === i
+                  ? html`<span>✓ Copied</span>`
+                  : html`<span>Copy</span>`}
+              </button>
+              ${para}
+            </div>
+          `)}
+        </section>
         ${
           this.summary
             ? html` <section>Summary: ${this.summary}</section>`

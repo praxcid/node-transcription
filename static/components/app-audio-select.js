@@ -192,7 +192,7 @@ class AppAudioSelect extends LitElement {
   }
 
   handleChange(e) {
-    this.selectedFile = {};
+    this.selectedFiles = [];
     this.selectedExample = e.target.value;
     this._dispatchSelectCdnAudio();
   }
@@ -200,7 +200,7 @@ class AppAudioSelect extends LitElement {
   handleClick() {
     if (this._fileInput) {
       this._fileInput.value = null;
-      this.selectedFile = null;
+      this.selectedFiles = [];
     }
 
     if (this._fileURL) {
@@ -248,15 +248,17 @@ class AppAudioSelect extends LitElement {
   }
 
   _dispatchSelectUploadFile() {
-    this.selectedFiles = this._fileInput.files;
-    if (this.selectedFiles.length > 0) {
-      const options = {
-        detail: this.selectedFiles,
-        bubbles: true,
-        composed: true,
-      };
-      this.dispatchEvent(new CustomEvent("fileselect", options));
-    }
+    const newFiles = Array.from(this._fileInput.files);
+    if (newFiles.length === 0) return;
+    const existingNames = new Set(this.selectedFiles.map((f) => f.name));
+    const merged = [...this.selectedFiles, ...newFiles.filter((f) => !existingNames.has(f.name))];
+    this.selectedFiles = merged;
+    const options = {
+      detail: this.selectedFiles,
+      bubbles: true,
+      composed: true,
+    };
+    this.dispatchEvent(new CustomEvent("fileselect", options));
   }
   _dispatchSelectCdnAudio() {
     if (this.selectedExample) {
@@ -294,7 +296,7 @@ class AppAudioSelect extends LitElement {
           class="button-choose-file"
           type="button"
           @click=${this.chooseFile}
-          value="Upload Audio Files"
+          .value=${this.selectedFiles.length > 0 ? "Add More Files" : "Upload Audio Files"}
         />
         <div class="selected-file">
           ${this.selectedFiles.length > 0

@@ -1,6 +1,7 @@
 const { Deepgram } = require("@deepgram/sdk");
 const config = require("./config.json");
 const express = require("express");
+const fetch = require("node-fetch");
 const multer = require("multer");
 const path = require("path");
 
@@ -13,9 +14,22 @@ const app = express();
 
 app.use(express.static(path.join(__dirname, "static")));
 
+app.get("/api/models", async (req, res) => {
+  try {
+    const response = await fetch("https://api.deepgram.com/v1/models", {
+      headers: { Authorization: `Token ${config.dgKey}` },
+    });
+    if (!response.ok) throw new Error(`Deepgram responded with ${response.status}`);
+    const data = await response.json();
+    res.send(data);
+  } catch (err) {
+    res.status(500).send({ err: err.message });
+  }
+});
+
 app.post("/api", upload.single("file"), async (req, res) => {
   const { body, file } = req;
-  const { url, features, model, version } = body;
+  const { url, features, model, version, keyterms } = body;
   const dgFeatures = JSON.parse(features);
 
   // Normalize feature flags to avoid conflicting or missing dependent options.
@@ -58,11 +72,14 @@ app.post("/api", upload.single("file"), async (req, res) => {
     // Log the features and model being sent for debugging
     // Build request options. Some Deepgram API versions expect formatting flags nested
     // under a `formatting` object. Include both to maximize compatibility.
+    const keytermList = keyterms ? JSON.parse(keyterms) : [];
     const requestOptions = {
       ...dgOptions,
       ...(Object.keys(dgOptions).length ? { formatting: dgOptions } : {}),
+      paragraphs: true,
       model,
-      ...(version ? { version } : null),
+      ...(version ? { version } : {}),
+      ...(keytermList.length ? { keyterm: keytermList } : {}),
     };
 
     console.log('Deepgram request options:', requestOptions);

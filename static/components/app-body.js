@@ -4,6 +4,7 @@ import "./app-audio-select.js";
 import "./app-model-select.js";
 import "./app-feature-select.js";
 import "./app-submit-button.js";
+import "./app-doctor-select.js";
 
 class AppBody extends LitElement {
   static styles = css`
@@ -23,10 +24,11 @@ class AppBody extends LitElement {
   render() {
     return html`<article class="body">
       <app-demo>
-        <app-audio-select></app-audio-select>
-        <app-model-select></app-model-select>
-        <app-submit-button></app-submit-button>
-        <app-feature-select></app-feature-select>
+        <app-audio-select slot="audio"></app-audio-select>
+        <app-model-select slot="model"></app-model-select>
+        <app-doctor-select slot="doctor"></app-doctor-select>
+        <app-submit-button slot="actions"></app-submit-button>
+        <app-feature-select slot="features"></app-feature-select>
       </app-demo>
     </article>`;
   }

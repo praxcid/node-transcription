@@ -6,6 +6,8 @@ class AppFeatureSelect extends LitElement {
     displayedFeatures: {},
     selectedFeatures: {},
     currentCategory: {},
+    medicalMode: { type: Boolean },
+    keyterms: { state: true },
   };
 
   static styles = css`
@@ -41,11 +43,52 @@ class AppFeatureSelect extends LitElement {
     .tabcontent p {
       color: #ededf2;
     }
+
+    .keyterm-section {
+      margin-top: 1.25rem;
+      border-top: 1px solid #3d4f66;
+      padding-top: 1rem;
+    }
+
+    .keyterm-section label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .keyterm-section p {
+      color: #8899aa;
+      font-size: 0.8rem;
+      margin: 0 0 0.5rem;
+    }
+
+    .keyterm-section textarea {
+      width: 100%;
+      min-height: 80px;
+      background: #1e2a38;
+      border: 1px solid #3d4f66;
+      border-radius: 0.0625rem;
+      color: #ededf2;
+      font-size: 0.85rem;
+      font-family: inherit;
+      padding: 0.5rem;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    .keyterm-count {
+      font-size: 0.75rem;
+      color: #8899aa;
+      text-align: right;
+      margin-top: 0.2rem;
+    }
   `;
 
   constructor() {
     super();
     this.displayedFeatures = [];
+    this.medicalMode = false;
+    this.keyterms = "";
     this.selectedFeatures = {
       smart_format: true,
       punctuate: true,
@@ -118,12 +161,7 @@ class AppFeatureSelect extends LitElement {
   }
 
   filterFeatures(item) {
-    this.displayedFeatures = [];
-    this.features.filter((i) => {
-      if (i.category === item) {
-        this.displayedFeatures.push(i);
-      }
-    });
+    this.displayedFeatures = this.features.filter((i) => i.category === item);
   }
 
   selectFeature = (e) => {
@@ -159,6 +197,23 @@ class AppFeatureSelect extends LitElement {
     this.requestUpdate();
   }
 
+  _parseKeyterms() {
+    return this.keyterms
+      .split(/[\n,]+/)
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 100);
+  }
+
+  _keytermChange = (e) => {
+    this.keyterms = e.target.value;
+    this.dispatchEvent(new CustomEvent("keytermselect", {
+      detail: this._parseKeyterms(),
+      bubbles: true,
+      composed: true,
+    }));
+  }
+
   render() {
     return html`<div class="app-feature-select">
       <div id="FORMATTING" class="tabcontent">
@@ -170,7 +225,7 @@ class AppFeatureSelect extends LitElement {
                   type="checkbox"
                   id="${feature.key}"
                   name="${feature.key}"
-                  ?checked=${this.selectedFeatures[feature.key] || (this.selectedFeatures.smart_format && ["punctuate", "paragraphs", "numerals"].includes(feature.key))}
+                  .checked=${!!(this.selectedFeatures[feature.key] || (this.selectedFeatures.smart_format && ["punctuate", "paragraphs", "numerals"].includes(feature.key)))}
                   @change=${this.selectFeature}
                   ?disabled=${this.selectedFeatures.smart_format &&
                   ["punctuate", "paragraphs", "numerals"].includes(feature.key)}
@@ -181,6 +236,18 @@ class AppFeatureSelect extends LitElement {
             `
           )}
         </section>
+        ${this.medicalMode ? html`
+          <div class="keyterm-section">
+            <label>Medical Keyterms</label>
+            <p>Enter medication names, procedures, or specialist terms to improve accuracy. Comma or newline separated — max 100 terms.</p>
+            <textarea
+              placeholder="e.g. Clindamycin, tretinoin, myocardial infarction"
+              .value=${this.keyterms}
+              @input=${this._keytermChange}
+            ></textarea>
+            <div class="keyterm-count">${this._parseKeyterms().length} / 100 terms</div>
+          </div>
+        ` : null}
       </div>
     </div>`;
   }
