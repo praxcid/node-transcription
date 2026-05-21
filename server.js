@@ -1,4 +1,3 @@
-const { Deepgram } = require("@deepgram/sdk");
 const config = require("./config.json");
 const express = require("express");
 const fetch = require("node-fetch");
@@ -21,7 +20,6 @@ function saveDoctors(doctors) {
 }
 
 const port = process.env.API_PORT || 8080;
-const deepgram = new Deepgram(config.dgKey);
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -95,25 +93,35 @@ app.post("/api", upload.single("file"), async (req, res) => {
       );
     }
 
-    // send request to deepgram
-    // Log the features and model being sent for debugging
-    // Build request options. Some Deepgram API versions expect formatting flags nested
-    // under a `formatting` object. Include both to maximize compatibility.
     const keytermList = keyterms ? JSON.parse(keyterms) : [];
-    const requestOptions = {
-      ...dgOptions,
-      ...(Object.keys(dgOptions).length ? { formatting: dgOptions } : {}),
-      paragraphs: true,
-      model,
-      ...(version ? { version } : {}),
-      ...(keytermList.length ? { keyterm: keytermList } : {}),
-    };
 
-    console.log('Deepgram request options:', requestOptions);
-    const transcription = await deepgram.transcription.preRecorded(dgRequest, requestOptions);
+    // Build query params manually so keyterm is repeated per term (?keyterm=a&keyterm=b)
+    const params = new URLSearchParams();
+    params.set('model', model);
+    if (version) params.set('version', version);
+    for (const [k, v] of Object.entries(dgOptions)) {
+      if (v !== undefined && v !== null) params.set(k, String(v));
+    }
+    params.set('paragraphs', 'true');
+    keytermList.forEach((term) => params.append('keyterm', term));
 
-    // return results
-    res.send({ model, version, dgRequest, dgFeatures, transcription });
+    const dgApiUrl = `https://api.deepgram.com/v1/listen?${params}`;
+    const dgHeaders = { Authorization: `Token ${config.dgKey}` };
+
+    const dgFetchOpts = dgRequest.url
+      ? { method: 'POST', headers: { ...dgHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ url: dgRequest.url }) }
+      : { method: 'POST', headers: { ...dgHeaders, 'Content-Type': dgRequest.mimetype }, body: dgRequest.buffer };
+
+    console.log('Deepgram request URL:', dgApiUrl);
+    const dgRes = await fetch(dgApiUrl, dgFetchOpts);
+    if (!dgRes.ok) {
+      const errBody = await dgRes.text();
+      throw new Error(`Deepgram ${dgRes.status}: ${errBody}`);
+    }
+    const transcription = await dgRes.json();
+
+    const dgRequestLog = dgRequest.url ? { url: dgRequest.url } : { mimetype: dgRequest.mimetype };
+    res.send({ model, version, dgRequest: dgRequestLog, dgFeatures, transcription });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.log(err, dgRequest, {
